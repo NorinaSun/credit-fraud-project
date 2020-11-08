@@ -46,5 +46,5 @@ results = data.frame(stream(sample,min_n))
 
 #plot the results
 plot(seq(min_n,nrow(results)),results[min_n:nrow(results),1],
-     xlab = "Number of observataions", ylab = "Time for Fit and Predictions (in seconds)",
+     xlab = "Number of Observations", ylab = "Time for Fit and Predictions (in seconds)",
      main = "Time Versus Dataset Size")
