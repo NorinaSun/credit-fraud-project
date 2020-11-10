@@ -1,13 +1,10 @@
 knitr::opts_chunk$set(echo = TRUE)
-install.packages("Rlab") 
-install.packages("adabag")
-install.packages("caret")
 library(tidyverse,verbose=FALSE)
 library(Rlab)  
 library(caret)
 library(adabag)
 library(randomForest,verbose=FALSE)
-source("/Users/sabad/Downloads/PredictingBinaries.r")
+#source("/Users/sabad/Downloads/PredictingBinaries.r")
 
 #========================Generating Data==================== 
 
@@ -99,6 +96,8 @@ head(sim1_1M)
 sim1_1M %>% 
   group_by( FraudResults ) %>% 
   summarise( percent = 100 * n() / nrow( sim1_1M ) )
+
+write.csv(sim1_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv", row.names = TRUE)
 
 #--------------1M observations dataset 2--------------
 
@@ -193,87 +192,88 @@ sim2_1M %>%
   group_by( FraudResults ) %>% 
   summarise( percent = 100 * n() / nrow( sim2_1M ) )
 
-#============Resample 1000 Observations================
-
-library(dplyr)
-memory.size()
-memory.limit(1089.68)
-
-#train set
-
-fraud = sim100M %>%
-  filter(sim100M$FraudResults == "1")
-fraudrows = sample(nrow(fraud),1000,replace=F)
-train_fraud = fraud[fraudrows,]
-
-nfraud = sim100M %>%
-  filter(sim100M$FraudResults == "0")
-nfraudrows = sample(nrow(nfraud),1000,replace=F)
-train_nfraud = nfraud[nfraudrows,]
-train = rbind(train_fraud,train_nfraud)
-
-rows <- sample(nrow(train),1600)
-train1 <- train[rows, ]
-
-#valid <- train[-rows,]
-# ---------------------------------------------------
-
-#validation set
-valid1 = sim100M[-fraudrows,]
-valid2 = sim100M[-nfraudrows,]
-valid3 = rbind(valid1,valid2)
-valid = valid3[sample(nrow(valid3),4000,replace=F),]
-
-
-#============Models================
-
-#regression
-mode = glm(FraudResults~.,data=train1,family="binomial")
-p1=predict(mode,newdata=valid,type="response")
-p1
-beta = mode$coefficients
-beta
-
-#random forest
-
-bow=randomForest(FraudResults~CreditLimit+ShoppingFreq+TransactionAmount+HowMuch+OnlineTransaction,data=train1)
-print(varImpPlot(bow))
-as.matrix(bow$importance/max(bow$importance))
-pbow=predict(bow,valid)
-
-
-#boosting
-#changing to factor variables
-
-train1$FraudResults = as.factor(train1$FraudResults)
-#str(train1)
-
-boh=boosting(FraudResults~.,data=train1)
-pboh=predict(boh,valid,type="prob")$prob[,2]
-as.matrix(boh$importance/max(boh$importance))
-
-train1$FraudResults = as.numeric(train1$FraudResults)
-#cor = cor(sim100M)
-#ROC
-
-roc(valid$FraudResults,p1,col="blue")$AUC
-roc(valid$FraudResults,pbow,col="red")$AUC
-roc(valid$FraudResults,pboh,col="dark green")$AUC
-
-legend(.6,.3, legend=c("Regression","Random Forest","Boosting"),col=c("blue","red","dark green"),lty=1)
-
-#lift
-
-lift(valid$FraudResults,p1,col="blue")
-lift(valid$FraudResults,pbow,lines=TRUE,col="red")
-lift(valid$FraudResults,pboh,lines=TRUE,col="dark green")
-
-legend(0.4,1.8,c("Regression","Random Forest","Boosting"),col=c("blue","red","dark green"),lty=1)
-
-#============== cross validation ================
-library(parallel)
-detectCores(all.tests = FALSE, logical = TRUE)
-
-select <- 
-
-
+write.csv(sim2_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv", row.names = TRUE)
+# #============Resample 1000 Observations================
+# 
+# library(dplyr)
+# memory.size()
+# memory.limit(1089.68)
+# 
+# #train set
+# 
+# fraud = sim100M %>%
+#   filter(sim100M$FraudResults == "1")
+# fraudrows = sample(nrow(fraud),1000,replace=F)
+# train_fraud = fraud[fraudrows,]
+# 
+# nfraud = sim100M %>%
+#   filter(sim100M$FraudResults == "0")
+# nfraudrows = sample(nrow(nfraud),1000,replace=F)
+# train_nfraud = nfraud[nfraudrows,]
+# train = rbind(train_fraud,train_nfraud)
+# 
+# rows <- sample(nrow(train),1600)
+# train1 <- train[rows, ]
+# 
+# #valid <- train[-rows,]
+# # ---------------------------------------------------
+# 
+# #validation set
+# valid1 = sim100M[-fraudrows,]
+# valid2 = sim100M[-nfraudrows,]
+# valid3 = rbind(valid1,valid2)
+# valid = valid3[sample(nrow(valid3),4000,replace=F),]
+# 
+# 
+# #============Models================
+# 
+# #regression
+# mode = glm(FraudResults~.,data=train1,family="binomial")
+# p1=predict(mode,newdata=valid,type="response")
+# p1
+# beta = mode$coefficients
+# beta
+# 
+# #random forest
+# 
+# bow=randomForest(FraudResults~CreditLimit+ShoppingFreq+TransactionAmount+HowMuch+OnlineTransaction,data=train1)
+# print(varImpPlot(bow))
+# as.matrix(bow$importance/max(bow$importance))
+# pbow=predict(bow,valid)
+# 
+# 
+# #boosting
+# #changing to factor variables
+# 
+# train1$FraudResults = as.factor(train1$FraudResults)
+# #str(train1)
+# 
+# boh=boosting(FraudResults~.,data=train1)
+# pboh=predict(boh,valid,type="prob")$prob[,2]
+# as.matrix(boh$importance/max(boh$importance))
+# 
+# train1$FraudResults = as.numeric(train1$FraudResults)
+# #cor = cor(sim100M)
+# #ROC
+# 
+# roc(valid$FraudResults,p1,col="blue")$AUC
+# roc(valid$FraudResults,pbow,col="red")$AUC
+# roc(valid$FraudResults,pboh,col="dark green")$AUC
+# 
+# legend(.6,.3, legend=c("Regression","Random Forest","Boosting"),col=c("blue","red","dark green"),lty=1)
+# 
+# #lift
+# 
+# lift(valid$FraudResults,p1,col="blue")
+# lift(valid$FraudResults,pbow,lines=TRUE,col="red")
+# lift(valid$FraudResults,pboh,lines=TRUE,col="dark green")
+# 
+# legend(0.4,1.8,c("Regression","Random Forest","Boosting"),col=c("blue","red","dark green"),lty=1)
+# 
+# #============== cross validation ================
+# library(parallel)
+# detectCores(all.tests = FALSE, logical = TRUE)
+# 
+# select <- 
+# 
+# 
