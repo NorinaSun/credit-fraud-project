@@ -40,55 +40,51 @@ sim1_1M <- data.frame(TransactionAmount,TransactionLocation,TransactionTime,
                       ShoppingFreq, ShopProximite, UsualProximite, PrevTranProx,
                       OnlineTransaction, BillPayment, PreAuthorized)
 
-for (i in 1:length(sim1_1M$TransactionLocation))
-  {if (sim1_1M$TransactionLocation[i] == 1 ||
-       sim1_1M$ShoppedBefore[i] == 1 ||
-       sim1_1M$ShopProximite[i] == 1 ||
-       sim1_1M$UsualProximite[i] == 1 ||
-       sim1_1M$PrevTranProx[i] == 1) 
-       {sim1_1M$Country[i] = 1}}
 
-Fraud = NULL
-sim1_1M["FraudResults"] = NULL
+sim1_1M[(sim1_1M$TransactionLocation == 1 ||
+          sim1_1M$ShoppedBefore == 1 ||
+          sim1_1M$ShopProximite == 1 ||
+          sim1_1M$UsualProximite  == 1 ||
+          sim1_1M$PrevTranProx == 1), "Country"] <- 1
+
+
+sim1_1M$Fraud = 0
+sim1_1M["FraudResults"] = 0
 
 # each of these variables contributes to the results with different probabilities - MAX = 28
 
-for (i in 1:length(sim1_1M$TransactionAmount)){
-  Fraud[i] <- 3*sim1_1M$TransactionAmount[i]+ 2*sim1_1M$TransactionLocation[i]+ 3*sim1_1M$TransactionTime[i]+
-    4*sim1_1M$CreditLimit[i]+ 2*sim1_1M$Overdraft[i]+ 3*sim1_1M$Country[i] + sim1_1M$ShoppedBefore[i]+ 2*sim1_1M$HowMuch[i]+
-    2*sim1_1M$ShoppingFreq[i]+ sim1_1M$ShopProximite[i]+ sim1_1M$UsualProximite[i]+ sim1_1M$PrevTranProx[i]+
-    3*sim1_1M$OnlineTransaction[i]+ sim1_1M$BillPayment[i]+ sim1_1M$PreAuthorized[i]
-  if (Fraud[i] <=9) {
-    sim1_1M$FraudResults[i] =0
-  } else {
-    sim1_1M$FraudResults[i] =1
-  }
-}
+sim1_1M[,"Fraud"] <- 3*sim1_1M$TransactionAmount+ 2*sim1_1M$TransactionLocation+ 3*sim1_1M$TransactionTime+
+    4*sim1_1M$CreditLimit+ 2*sim1_1M$Overdraft+ 3*sim1_1M$Country+ sim1_1M$ShoppedBefore+ 2*sim1_1M$HowMuch+
+    2*sim1_1M$ShoppingFreq+ sim1_1M$ShopProximite+ sim1_1M$UsualProximite+ sim1_1M$PrevTranProx+
+    3*sim1_1M$OnlineTransaction+ sim1_1M$BillPayment+ sim1_1M$PreAuthorized
 
-if (sim1_1M$Overdraft==0 && 
-    sim1_1M$Country==0 && 
-    sim1_1M$ShoppedBefore==0)
-   {sim1_1M$FraudResults==0}
+sim1_1M[(sim1_1M$Fraud<=9),"FraudResults"] <- 0
+sim1_1M[(sim1_1M$Fraud>9),"FraudResults"] <- 1
 
-if (sim1_1M$OnlineTransaction==0 && 
+
+Fraud_1 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.2,0.8))
+Fraud_0 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.8,0.2))
+
+
+sim1_1M[(sim1_1M$Overdraft==0 && 
+         sim1_1M$Country==0 && 
+         sim1_1M$ShoppedBefore==0),"FraudResults"] <- sample(Fraud_0,size=1)
+
+sim1_1M[(sim1_1M$OnlineTransaction==0 && 
     sim1_1M$BillPayment==0 && 
-    sim1_1M$PreAuthorized==0) 
-   {sim1_1M$FraudResults==0}
+    sim1_1M$PreAuthorized==0),"FraudResults"] <- sample(Fraud_0, size=1)
 
-if (sim1_1M$ShopProximite==1 && 
+sim1_1M[(sim1_1M$ShopProximite==1 && 
     sim1_1M$ShoppedBefore==1 && 
     sim1_1M$UsualProximite==1 && 
-    sim1_1M$PrevTranProx==1) 
-   {sim1_1M$FraudResults==1}
+    sim1_1M$PrevTranProx==1), "FraudResults"] <- sample(Fraud_1, size=1)
 
 
-for (i in 1:length(sim1_1M$TransactionLocation))
-    {if (sim1_1M$TransactionLocation[i] == 0 &&
-         sim1_1M$ShoppedBefore[i] == 0 &&
-         sim1_1M$ShopProximite[i] == 0 &&
-         sim1_1M$UsualProximite[i] == 0 &&
-         sim1_1M$PrevTranProx[i] == 0) 
-         {sim1_1M$FraudResults[i] = 0}}
+sim1_1M[(sim1_1M$TransactionLocation == 0 &&
+     sim1_1M$ShoppedBefore == 0 &&
+     sim1_1M$ShopProximite == 0 &&
+     sim1_1M$UsualProximite == 0 &&
+     sim1_1M$PrevTranProx == 0), "FraudResults"] <- sample(Fraud_0,size=1)
 
 
 str(sim1_1M)
@@ -97,100 +93,101 @@ sim1_1M %>%
   group_by( FraudResults ) %>% 
   summarise( percent = 100 * n() / nrow( sim1_1M ) )
 
+sim1_1M$Fraud <- NULL
+
 write.csv(sim1_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv", row.names = TRUE)
 
 #--------------1M observations dataset 2--------------
 
-
-TransactionAmount <- rbinom(1000000, 1, 0.5)          
-TransactionLocation <- rbinom(1000000, 1, 0.5)        
-TransactionTime <-rbinom(1000000, 1, 0.7)             
-CreditLimit <- rbinom(1000000, 1, 0.34)               
-Overdraft <- rbinom(1000000, 1, 0.18)                  
-Country <- rbinom(1000000, 1, 0.6)                   
-ShoppedBefore <- rbinom(1000000, 1, 0.32)              
-HowMuch <- rbinom(1000000, 1, 0.8)                   
+#Amount <- rnorm(1000000, mean = 5000, sd = 1000) 
+TransactionAmount <- rbinom(1000000, 1, 0.5)          # = 0 if the amount of purchase is less than 1000
+TransactionLocation <- rbinom(1000000, 1, 0.5)        # = 0 if the transaction is done where the buyer lives
+TransactionTime <-rbinom(1000000, 1, 0.7)             # = 0 if the transaction is not done during 12 - 5 .A.M
+#CreditLimit <- rnorm(1000000, mean = 20000, sd = 4000)
+CreditLimit <- rbinom(1000000, 1, 0.34)               # = 0 if the amount of purchase is less than credit limit
+Overdraft <- rbinom(1000000, 1, 0.18)                  # = 0 if the buyer has not had overdraft during the past 6 months
+Country <- rbinom(1000000, 1, 0.6)                   # = 0 if the transaction location is not in another country
+ShoppedBefore <- rbinom(1000000, 1, 0.32)              # = 0 if the buyer has shopped there before
+#HowMuch <- rnorm(1000000, mean = 20000, sd = 4000)    
+HowMuch <- rbinom(1000000, 1, 0.8)                    # = 0 if the amount of purchase is less than 1000
 for (i in 1:length(ShoppedBefore))
 {if (ShoppedBefore[i] == 1) 
 {HowMuch[i] = 0}}
-    
-ShoppingFreq <- rbinom(1000000, 1, 0.09)              
-ShopProximite <- rbinom(1000000, 1, 0.69)              
-UsualProximite <- rbinom(1000000, 1, 0.5)            
-PrevTranProx <- rbinom(1000000, 1, 0.5)               
-OnlineTransaction <- rbinom(1000000, 1, 0.9)          
-BillPayment <- rbinom(1000000, 1, 0.8)               
-PreAuthorized <- rbinom(1000000, 1, 0.1)             
+#ShoppingFreq <- rnorm(1000000, mean = 50, sd = 10)    
+ShoppingFreq <- rbinom(1000000, 1, 0.09)              # = 0 if the buyer frequently purchase from this shop
+ShopProximite <- rbinom(1000000, 1, 0.69)              # = 0 if the shop is near where the buyer lives
+UsualProximite <- rbinom(1000000, 1, 0.5)             # = 0 if the transaction happens near where they usually spend
+PrevTranProx <- rbinom(1000000, 1, 0.5)               # = 0 if the transaction happens near their previous transactions
+OnlineTransaction <- rbinom(1000000, 1, 0.9)          # = 0 if the transaction is not online
+BillPayment <- rbinom(1000000, 1, 0.8)                # = 0 if the transaction is a bill payment
+PreAuthorized <- rbinom(1000000, 1, 0.1)              # = 0 if the payment is a pre-authorized
 
 sim2_1M <- data.frame(TransactionAmount,TransactionLocation,TransactionTime,
                       CreditLimit, Overdraft,Country , ShoppedBefore, HowMuch,
                       ShoppingFreq, ShopProximite, UsualProximite, PrevTranProx,
                       OnlineTransaction, BillPayment, PreAuthorized)
 
-for (i in 1:length(sim2_1M$TransactionLocation))
-{if (sim2_1M$TransactionLocation[i] == 1 ||
-     sim2_1M$ShoppedBefore[i] == 1 ||
-     sim2_1M$ShopProximite[i] == 1 ||
-     sim2_1M$UsualProximite[i] == 1 ||
-     sim2_1M$PrevTranProx[i] == 1) 
-{sim2_1M$Country[i] = 0}}
 
-Fraud1 = NULL
-sim2_1M["FraudResults"] = NULL
+sim2_1M[(sim2_1M$TransactionLocation == 1 ||
+           sim2_1M$ShoppedBefore == 1 ||
+           sim2_1M$ShopProximite == 1 ||
+           sim2_1M$UsualProximite  == 1 ||
+           sim2_1M$PrevTranProx == 1), "Country"] <- 0
+
+
+sim2_1M$Fraud = 0
+sim2_1M["FraudResults"] = 0
 
 # each of these variables contributes to the results with different probabilities - MAX = 28
 
-for (i in 1:length(sim2_1M$TransactionAmount)){
-  Fraud1[i] <- 3*sim2_1M$TransactionAmount[i]+ 2*sim2_1M$TransactionLocation[i]+ 3*sim2_1M$TransactionTime[i]+
-    4*sim2_1M$CreditLimit[i]+ 2*sim2_1M$Overdraft[i]+ 3*sim2_1M$Country[i] + sim2_1M$ShoppedBefore[i]+ 2*sim2_1M$HowMuch[i]+
-    2*sim2_1M$ShoppingFreq[i]+ sim2_1M$ShopProximite[i]+ sim2_1M$UsualProximite[i]+ sim2_1M$PrevTranProx[i]+
-    3*sim2_1M$OnlineTransaction[i]+ sim2_1M$BillPayment[i]+ sim2_1M$PreAuthorized[i]
-  if (Fraud[i] <=22) {
-    sim2_1M$FraudResults[i] =0
-  } else {
-    sim2_1M$FraudResults[i] =1
-  }
-}
+sim2_1M[,"Fraud"] <- 3*sim2_1M$TransactionAmount+ 2*sim2_1M$TransactionLocation+ 3*sim2_1M$TransactionTime+
+  4*sim2_1M$CreditLimit+ 2*sim2_1M$Overdraft+ 3*sim2_1M$Country+ sim2_1M$ShoppedBefore+ 2*sim2_1M$HowMuch+
+  2*sim2_1M$ShoppingFreq+ sim2_1M$ShopProximite+ sim2_1M$UsualProximite+ sim2_1M$PrevTranProx+
+  3*sim2_1M$OnlineTransaction+ sim2_1M$BillPayment+ sim2_1M$PreAuthorized
+
+sim2_1M[(sim2_1M$Fraud<=22),"FraudResults"] <- 0
+sim2_1M[(sim2_1M$Fraud>22),"FraudResults"] <- 1
 
 
-if (sim1_1M$CreditLimit[i] == 1 &&
-   sim1_1M$ShoppedBefore[i] == 0 && 
-   sim1_1M$PreAuthorized[i] == 1)
-   {sim1_1M$FraudResults==1}
+Fraud_1 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.2,0.8))
+Fraud_0 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.8,0.2))
 
-if (sim1_1M$HowMuch[i] == 0 &&
-   sim1_1M$ShoppingFreq[i] == 0 && 
-   sim1_1M$OnlineTransaction[i] == 0)
-   {sim1_1M$FraudResults==0}
+sim2_1M[(sim2_1M$CreditLimit==1 && 
+           sim2_1M$ShoppedBefore==0 && 
+           sim2_1M$PreAuthorized==1),"FraudResults"] <- sample(Fraud_1,size=1)
 
+sim2_1M[(sim2_1M$HowMuch==0 && 
+           sim2_1M$ShoppingFreq==0 && 
+           sim2_1M$OnlineTransaction==0),"FraudResults"] <- sample(Fraud_0,size=1)
 
-if (sim1_1M$CreditLimit[i] == 1 &&
-    sim1_1M$BillPayment[i] == 1 && 
-    sim1_1M$UsualProximite[i] == 0)
-    {sim1_1M$FraudResults==0}
+sim2_1M[(sim2_1M$CreditLimit==1 && 
+           sim2_1M$BillPayment==1 && 
+           sim2_1M$UsualProximite==0),"FraudResults"] <- sample(Fraud_0, size=1)
 
-if (sim1_1M$TransactionAmoun[i] == 1 &&
-   sim1_1M$TransactionTime[i] == 0 && 
-   sim1_1M$ShoppedBefore[i] == 0 &&
-   sim1_1M$ShoppingFreq[i] == 0 &&
-   sim1_1M$PreAuthorized[i] == 1)
-   {sim1_1M$FraudResults==1}
+sim2_1M[(sim2_1M$TransactionAmount==1 && 
+           sim2_1M$TransactionTime==0 && 
+           sim2_1M$ShoppedBefore==0 && 
+           sim2_1M$ShoppingFreq==0 &&
+           sim2_1M$PreAuthorized=1), "FraudResults"] <- sample(Fraud_1, size=1)
 
 
+sim2_1M[(sim2_1M$TransactionLocation == 0 &&
+           sim2_1M$ShoppedBefore == 1 &&
+           sim2_1M$ShopProximite == 0 &&
+           sim2_1M$UsualProximite == 0 &&
+           sim2_1M$ShopProximite==1), "FraudResults"] <- sample(Fraud_1,size=1)
 
-for (i in 1:length(sim1_1M$TransactionLocation))
-  {if (sim1_1M$TransactionLocation[i] == 0 &&
-      sim1_1M$ShoppedBefore[i] == 1 &&
-      sim1_1M$ShoppingFreq[i] == 0 &&
-      sim1_1M$UsualProximite[i] == 0 &&
-      sim1_1M$ShopProximite[i] == 1) 
-      {sim1_1M$FraudResults[i] = 1}}
 
 str(sim2_1M)
 head(sim2_1M)
 sim2_1M %>% 
   group_by( FraudResults ) %>% 
   summarise( percent = 100 * n() / nrow( sim2_1M ) )
+
+sim2_1M$Fraud <- NULL
+
+
+
 
 write.csv(sim2_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv", row.names = TRUE)
 # #============Resample 1000 Observations================

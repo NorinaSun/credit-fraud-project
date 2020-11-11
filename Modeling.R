@@ -8,7 +8,11 @@ library(adabag)
 library(randomForest,verbose=FALSE)
 
 #load the data
-sim100M = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/sim100M.csv")
+data_v1 = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv")
+data_v2 = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv")
+
+data = data_v1[sample(nrow(data_v1), 10000), ]
+
 
 #predict and train functions
 train_md = function(data,md){
@@ -87,6 +91,6 @@ streaming = function(data,min_n,md){
   return(list("train_time" = train_list_time, "predict_time" = predict_list_time))
 }
 
-results = streaming(sim100M, 1000, "rf")
+results = streaming(data, 100, "reg")
 train_time = results["train_time"]
 predict_time = results["predict_time"]
