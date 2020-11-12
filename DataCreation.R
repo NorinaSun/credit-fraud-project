@@ -187,8 +187,6 @@ sim2_1M %>%
 sim2_1M$Fraud <- NULL
 
 
-
-
 write.csv(sim2_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv", row.names = TRUE)
 # #============Resample 1000 Observations================
 # 
