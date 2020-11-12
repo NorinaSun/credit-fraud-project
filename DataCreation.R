@@ -190,10 +190,10 @@ down_sim2_1M=downSample(x = sim2_1M[, -ncol(sim2_1M)],
                       yname = "FraudResults")
 table(down_sim2_1M$FraudResults)
 
-sim2_1M$Fraud <- NULL
+down_sim2_1M$Fraud <- NULL
 
 
-write.csv(sim2_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv", row.names = TRUE)
+write.csv(down_sim2_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv", row.names = TRUE)
 # #============Resample 1000 Observations================
 # 
 # library(dplyr)
