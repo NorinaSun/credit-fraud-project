@@ -199,6 +199,7 @@ data_change_simulation = function(old_data,new_data,test_data,FUN){
     returned = FUN(train_data,test_data)
     
     View(returned)
+    print(table(returned$predictions))
     
     #adding accuracy to list
     results = confusionMatrix(as.factor(returned$predictions), as.factor(test_data$FraudResults))
