@@ -184,6 +184,12 @@ sim2_1M %>%
   group_by( FraudResults ) %>% 
   summarise( percent = 100 * n() / nrow( sim2_1M ) )
 
+down_sim2_1M=downSample(x = sim2_1M[, -ncol(sim2_1M)],
+                      y = as.factor(sim2_1M$FraudResults),
+                      list = FALSE,
+                      yname = "FraudResults")
+table(down_sim2_1M$FraudResults)
+
 sim2_1M$Fraud <- NULL
 
 
