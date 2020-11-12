@@ -1,77 +1,92 @@
-library(class)
-library(data.table)
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse,verbose=FALSE)
-library(Rlab)
-library(caret)
-library(adabag)
-library(randomForest,verbose=FALSE)
-library(purrr)
-library(dplyr)
+# library(class)
+# library(data.table)
+# knitr::opts_chunk$set(echo = TRUE)
+# library(tidyverse,verbose=FALSE)
+# library(Rlab)
+# library(caret)
+# library(adabag)
+# library(randomForest,verbose=FALSE)
+# library(purrr)
+# library(dplyr)
+# 
+# 
+# #load the data
+# data_v1_full = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv")
+# data_v2_full = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv")
 
-
-#load the data
-data_v1_full = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv")
-data_v2_full = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv")
-
-
-#predict and train functions
-train_md = function(data,md){
-
-  if(md == "reg"){
-
-    # Start the clock!
-    ptm <- proc.time()
-
-    trained_model = glm(as.factor(FraudResults)~TransactionAmount+TransactionTime+Overdraft+Country+
-                          ShoppedBefore+HowMuch+ShoppingFreq+ShopProximite+UsualProximite+PrevTranProx
-                        +OnlineTransaction+BillPayment+PreAuthorized,data=data,family="binomial")
-
-  }
-  else if(md == "rf"){
-
-    # Start the clock!
-    ptm <- proc.time()
-    trained_model = randomForest(as.factor(FraudResults)~.,data=data)
-  }
-  else if(md == "boosting"){
-    data$FraudResults = as.factor(unlist(data$FraudResults))
-
-    # Start the clock!
-    ptm <- proc.time()
-
-    trained_model = boosting(FraudResults~.,data=data)
-  }
-  else{
-    print("invalid model selection passed")
-  }
-
-  # Stop the clock
-  runtime = proc.time() - ptm
-  elapsed_time = runtime[3]
+#models
+logistic_regression = function(train_data, test_data){
   
-  #return the model and the elapsed time
-  return(list("trained_model"= trained_model, "time"= elapsed_time))
-}
-
-predict_md = function(data,model){
+  #TRAINING
   
   # Start the clock!
-  ptm <- proc.time()
+  train_start <- proc.time()
   
-  #generate the prediction
-  prediction = predict(model,newdata = data)
+  #train the model
+  trained_model = glm(as.factor(FraudResults)~TransactionAmount+TransactionTime+Overdraft+Country+
+                        ShoppedBefore+HowMuch+ShoppingFreq+ShopProximite+UsualProximite+PrevTranProx
+                      +OnlineTransaction+BillPayment+PreAuthorized,data=train_data,family="binomial")
+  
   
   # Stop the clock
-  runtime = proc.time() - ptm
-  elapsed_time = runtime[3]
+  train_time = proc.time() - train_start
+  elapsed_train_time = train_time[3]
   
-  #return the prediction value and the elapsed time
-  return(list("predictions"= prediction, "time" = elapsed_time))
+  #TESTING
+  
+  #subsetting the data
+  data_subset = select(test_data,TransactionAmount,TransactionTime,Overdraft,Country,
+                       ShoppedBefore,HowMuch,ShoppingFreq,ShopProximite,UsualProximite,PrevTranProx,
+                       OnlineTransaction,BillPayment,PreAuthorized)
+  
+  # Start the clock!
+  test_start <- proc.time()
+  
+  #generate the prediction
+  prediction_probabilities = predict(trained_model,newdata = test_data, type="response")
+  
+  # Stop the clock
+  test_time = proc.time() - test_start
+  elapsed_test_time = train_time[3]
+  
+  prediction= ifelse(prediction_probabilities > 0.5 ,1,0)
+
+  return(list("predictions" = prediction, "train_time" = elapsed_train_time, "test_time" = elapsed_test_time))
+  
+}
+  
+randomForestmd = function(train_data, test_data){
+  
+  #TRAINING
+  
+  # Start the clock!
+  train_start <- proc.time()
+  
+  #train the model
+  trained_model = randomForest(as.factor(FraudResults)~.,data=train_data)
+  
+  # Stop the clock
+  train_time = proc.time() - train_start
+  elapsed_train_time = train_time[3]
+  
+  #TESTING
+
+  # Start the clock!
+  test_start <- proc.time()
+  
+  #generate the prediction
+  prediction = predict(trained_model,newdata = test_data)
+  
+  # Stop the clock
+  test_time = proc.time() - test_start
+  elapsed_test_time = train_time[3]
+  
+  return(list("predictions" = prediction, "train_time" = elapsed_train_time, "test_time" = elapsed_test_time))
+  
 }
 
 #streaming simulation
-streaming = function(data,min_n,max_n,md){
+streaming = function(data,min_n,max_n,FUN){
   
   #define test and train
   train_data = data[0:max_n,]
@@ -84,26 +99,26 @@ streaming = function(data,min_n,max_n,md){
   dataset_size = list()
   
   for(i in seq(min_n,max_n,1000)){
+    #keeping track of observation size//where we are in the loop
     print(i)
     dataset_size[[i]] = i
-    #training the model
-    train_results = train_md(train_data[0:i,],md)
-
-    #getting what it returns
-    trained_model = train_results["trained_model"]
-    train_list_time[[i]] = as.numeric(train_results$time)
-  
-    #predicting with new observation
+    
+    #resetting indicies for test set
     rownames(test_data) <- NULL
-    predict_results = predict_md(test_data, trained_model)
     
-    #getting what it returns
-    predictions = predict_results$prediction$trained_model
-
-    predict_list_time[[i]] = as.numeric(predict_results$time) / nrow(test_data)
+    #run the model
+    results = FUN(train_data[0:i,], test_data)
     
-    results = confusionMatrix(as.factor(predictions), as.factor(test_data$FraudResults))
+    #train time
+    train_list_time[[i]] = as.numeric(results$train_time)
+    
+    #test time
+    predict_list_time[[i]] = as.numeric(results$test_time) / nrow(test_data)
+    
+    #predictions accuracy
+    results = confusionMatrix(as.factor(results$predictions), as.factor(test_data$FraudResults))
     accuracy_list[[i]] = results$overall['Accuracy']
+    
   }
   
   return(list("train_time" = train_list_time, "predict_time" = predict_list_time, "accuracy"= accuracy_list, "size" = dataset_size))
@@ -119,7 +134,7 @@ min_n = 1000
 max_n = 4000
 
 #running the script
-results = streaming(data_v1, min_n,max_n, "rf")
+results = streaming(data_v1, min_n,max_n, logistic_regression)
 
 results_df = do.call(rbind, Map(data.frame, observation_size = results$size, train_time = results$train_time, predict_time = results$predict_time, accuracy = results$accuracy))
 rownames(results_df) = results_df$observation_size
