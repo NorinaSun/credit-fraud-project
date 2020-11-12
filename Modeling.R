@@ -8,8 +8,8 @@
 # library(randomForest,verbose=FALSE)
 # library(purrr)
 # library(dplyr)
-# 
-# 
+# library(tidyverse)
+# library(klaR)
 # #load the data
 # data_v1_full = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv")
 # data_v2_full = read.csv("/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v2.csv")
@@ -85,6 +85,56 @@ randomForestmd = function(train_data, test_data){
   
 }
 
+knn_md = function(train_data, test_data){
+  
+  #TRAINING
+  
+  # Start the clock!
+  start <- proc.time()
+
+  #train the model and generate predictions
+  prediction <- knn(train=select(train_data, -c(FraudResults)), test = select(test_data, -c(FraudResults)), cl=train_data$FraudResults, k=10)
+  
+  # Stop the clock
+  time = proc.time() - start
+  elapsed_time = time[3]
+  
+  
+  return(list("predictions" = prediction, "train_time" = elapsed_time, "test_time" = elapsed_time))
+  
+}
+
+nbc = function(train_data, test_data){
+  
+  #TRAINING
+  train_data$Country <- NULL
+  
+  # Start the clock!
+  train_start <- proc.time()
+  
+  #train the model
+  trained_model = train(as.factor(FraudResults)~.,'nb', data = train_data)
+  
+  # Stop the clock
+  train_time = proc.time() - train_start
+  elapsed_train_time = train_time[3]
+  
+  #TESTING
+  test_data$Country <- NULL
+  # Start the clock!
+  test_start <- proc.time()
+  
+  #generate the prediction
+  prediction = predict(trained_model,newdata = test_data)
+  
+  # Stop the clock
+  test_time = proc.time() - test_start
+  elapsed_test_time = train_time[3]
+  
+  return(list("predictions" = prediction, "train_time" = elapsed_train_time, "test_time" = elapsed_test_time))
+  
+}
+
 #streaming simulation
 streaming = function(data,min_n,max_n,FUN){
   
@@ -134,7 +184,7 @@ min_n = 1000
 max_n = 4000
 
 #running the script
-results = streaming(data_v1, min_n,max_n, logistic_regression)
+results = streaming(data_v1, min_n,max_n, knn_md)
 
 results_df = do.call(rbind, Map(data.frame, observation_size = results$size, train_time = results$train_time, predict_time = results$predict_time, accuracy = results$accuracy))
 rownames(results_df) = results_df$observation_size
