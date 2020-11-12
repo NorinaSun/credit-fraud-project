@@ -58,8 +58,8 @@ sim1_1M[,"Fraud"] <- 3*sim1_1M$TransactionAmount+ 2*sim1_1M$TransactionLocation+
     2*sim1_1M$ShoppingFreq+ sim1_1M$ShopProximite+ sim1_1M$UsualProximite+ sim1_1M$PrevTranProx+
     3*sim1_1M$OnlineTransaction+ sim1_1M$BillPayment+ sim1_1M$PreAuthorized
 
-sim1_1M[(sim1_1M$Fraud<=9),"FraudResults"] <- 0
-sim1_1M[(sim1_1M$Fraud>9),"FraudResults"] <- 1
+sim1_1M[(sim1_1M$Fraud<=11),"FraudResults"] <- 0
+sim1_1M[(sim1_1M$Fraud>11),"FraudResults"] <- 1
 
 
 Fraud_1 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.2,0.8))
@@ -145,12 +145,12 @@ sim2_1M[,"Fraud"] <- 3*sim2_1M$TransactionAmount+ 2*sim2_1M$TransactionLocation+
   2*sim2_1M$ShoppingFreq+ sim2_1M$ShopProximite+ sim2_1M$UsualProximite+ sim2_1M$PrevTranProx+
   3*sim2_1M$OnlineTransaction+ sim2_1M$BillPayment+ sim2_1M$PreAuthorized
 
-sim2_1M[(sim2_1M$Fraud<=22),"FraudResults"] <- 0
-sim2_1M[(sim2_1M$Fraud>22),"FraudResults"] <- 1
+sim2_1M[(sim2_1M$Fraud<=9),"FraudResults"] <- 0
+sim2_1M[(sim2_1M$Fraud>9),"FraudResults"] <- 1
 
 
-Fraud_1 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.2,0.8))
-Fraud_0 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.8,0.2))
+Fraud_1 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.1,0.9))
+Fraud_0 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.9,0.1))
 
 sim2_1M[(sim2_1M$CreditLimit==1 && 
            sim2_1M$ShoppedBefore==0 && 
@@ -158,7 +158,7 @@ sim2_1M[(sim2_1M$CreditLimit==1 &&
 
 sim2_1M[(sim2_1M$HowMuch==0 && 
            sim2_1M$ShoppingFreq==0 && 
-           sim2_1M$OnlineTransaction==0),"FraudResults"] <- sample(Fraud_0,size=1)
+           sim2_1M$OnlineTransaction==0),"FraudResults"] <- sample(Fraud_1,size=1)
 
 sim2_1M[(sim2_1M$CreditLimit==1 && 
            sim2_1M$BillPayment==1 && 
