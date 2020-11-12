@@ -168,7 +168,7 @@ sim2_1M[(sim2_1M$TransactionAmount==1 &&
            sim2_1M$TransactionTime==0 && 
            sim2_1M$ShoppedBefore==0 && 
            sim2_1M$ShoppingFreq==0 &&
-           sim2_1M$PreAuthorized=1), "FraudResults"] <- sample(Fraud_1, size=1)
+           sim2_1M$PreAuthorized==1), "FraudResults"] <- sample(Fraud_1, size=1)
 
 
 sim2_1M[(sim2_1M$TransactionLocation == 0 &&
