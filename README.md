@@ -16,9 +16,12 @@ data set will be randomly generated using Monte Carlo simulation.
 The final paper is available to read: ResearchPaper.pdf
 
 ## Division of Labour
-Data Generation: Saba Daftari + Xinyuan Qi
-Modeling + Visualizations: Norina Sun
-Report: Saba Daftari + Xinyuan Qi
+Data Generation: Saba Daftari + Xinyuan Qi  
+
+Modeling + Visualizations: Norina Sun  
+
+Report: Saba Daftari + Xinyuan Qi  
+
 
 
 Norina Sun, Saba Daftari, Xinyuan Qi.
