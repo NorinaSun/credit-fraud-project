@@ -1,5 +1,5 @@
 # CreditFraudProject
-Class project for MATH 60603
+Class project for MATH 60603A Statistical Learning, Fall 2020. 
 
 ## Abstract
 
@@ -14,6 +14,12 @@ model is most suitable for a latency sensitive application such as credit card f
 data set will be randomly generated using Monte Carlo simulation.
 
 The final paper is available to read: ResearchPaper.pdf
+
+## Division of Labour
+Data Generation: Saba Daftari + Xinyuan Qi
+Modeling + Visualizations: Norina Sun
+Report: Saba Daftari + Xinyuan Qi
+
 
 Norina Sun, Saba Daftari, Xinyuan Qi.
 November 2020
