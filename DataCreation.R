@@ -98,29 +98,30 @@ sim1_1M$Fraud <- NULL
 write.csv(sim1_1M, "/Users/NorinaSun/Downloads/MATH60603/GroupProject/CreditFraudProject/data_v1.csv", row.names = TRUE)
 
 #--------------1M observations dataset 2--------------
-
+#setting the number of observations
+n = 5000000
 #Amount <- rnorm(1000000, mean = 5000, sd = 1000) 
-TransactionAmount <- rbinom(1000000, 1, 0.5)          # = 0 if the amount of purchase is less than 1000
-TransactionLocation <- rbinom(1000000, 1, 0.5)        # = 0 if the transaction is done where the buyer lives
-TransactionTime <-rbinom(1000000, 1, 0.7)             # = 0 if the transaction is not done during 12 - 5 .A.M
-#CreditLimit <- rnorm(1000000, mean = 20000, sd = 4000)
-CreditLimit <- rbinom(1000000, 1, 0.34)               # = 0 if the amount of purchase is less than credit limit
-Overdraft <- rbinom(1000000, 1, 0.18)                  # = 0 if the buyer has not had overdraft during the past 6 months
-Country <- rbinom(1000000, 1, 0.6)                   # = 0 if the transaction location is not in another country
-ShoppedBefore <- rbinom(1000000, 1, 0.32)              # = 0 if the buyer has shopped there before
-#HowMuch <- rnorm(1000000, mean = 20000, sd = 4000)    
-HowMuch <- rbinom(1000000, 1, 0.8)                    # = 0 if the amount of purchase is less than 1000
+TransactionAmount <- rbinom(n, 1, 0.5)          # = 0 if the amount of purchase is less than 1000
+TransactionLocation <- rbinom(n, 1, 0.5)        # = 0 if the transaction is done where the buyer lives
+TransactionTime <-rbinom(n, 1, 0.7)             # = 0 if the transaction is not done during 12 - 5 .A.M
+#CreditLimit <- rnorm(n, mean = 20000, sd = 4000)
+CreditLimit <- rbinom(n, 1, 0.34)               # = 0 if the amount of purchase is less than credit limit
+Overdraft <- rbinom(n, 1, 0.18)                  # = 0 if the buyer has not had overdraft during the past 6 months
+Country <- rbinom(n, 1, 0.6)                   # = 0 if the transaction location is not in another country
+ShoppedBefore <- rbinom(n, 1, 0.32)              # = 0 if the buyer has shopped there before
+#HowMuch <- rnorm(n, mean = 20000, sd = 4000)    
+HowMuch <- rbinom(n, 1, 0.8)                    # = 0 if the amount of purchase is less than 1000
 for (i in 1:length(ShoppedBefore))
 {if (ShoppedBefore[i] == 1) 
 {HowMuch[i] = 0}}
-#ShoppingFreq <- rnorm(1000000, mean = 50, sd = 10)    
-ShoppingFreq <- rbinom(1000000, 1, 0.09)              # = 0 if the buyer frequently purchase from this shop
-ShopProximite <- rbinom(1000000, 1, 0.69)              # = 0 if the shop is near where the buyer lives
-UsualProximite <- rbinom(1000000, 1, 0.5)             # = 0 if the transaction happens near where they usually spend
-PrevTranProx <- rbinom(1000000, 1, 0.5)               # = 0 if the transaction happens near their previous transactions
-OnlineTransaction <- rbinom(1000000, 1, 0.9)          # = 0 if the transaction is not online
-BillPayment <- rbinom(1000000, 1, 0.8)                # = 0 if the transaction is a bill payment
-PreAuthorized <- rbinom(1000000, 1, 0.1)              # = 0 if the payment is a pre-authorized
+#ShoppingFreq <- rnorm(n, mean = 50, sd = 10)    
+ShoppingFreq <- rbinom(n, 1, 0.09)              # = 0 if the buyer frequently purchase from this shop
+ShopProximite <- rbinom(n, 1, 0.69)              # = 0 if the shop is near where the buyer lives
+UsualProximite <- rbinom(n, 1, 0.5)             # = 0 if the transaction happens near where they usually spend
+PrevTranProx <- rbinom(n, 1, 0.5)               # = 0 if the transaction happens near their previous transactions
+OnlineTransaction <- rbinom(n, 1, 0.9)          # = 0 if the transaction is not online
+BillPayment <- rbinom(n, 1, 0.8)                # = 0 if the transaction is a bill payment
+PreAuthorized <- rbinom(n, 1, 0.1)              # = 0 if the payment is a pre-authorized
 
 sim2_1M <- data.frame(TransactionAmount,TransactionLocation,TransactionTime,
                       CreditLimit, Overdraft,Country , ShoppedBefore, HowMuch,
@@ -149,8 +150,8 @@ sim2_1M[(sim2_1M$Fraud<=9),"FraudResults"] <- 0
 sim2_1M[(sim2_1M$Fraud>9),"FraudResults"] <- 1
 
 
-Fraud_1 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.1,0.9))
-Fraud_0 = sample(c(0,1), size = 1000000, replace = TRUE, prob=c(0.9,0.1))
+Fraud_1 = sample(c(0,1), size = n, replace = TRUE, prob=c(0.1,0.9))
+Fraud_0 = sample(c(0,1), size = n, replace = TRUE, prob=c(0.9,0.1))
 
 sim2_1M[(sim2_1M$CreditLimit==1 && 
            sim2_1M$ShoppedBefore==0 && 

@@ -32,19 +32,21 @@ logistic_regression = function(train_data, test_data){
   #TESTING
   
   #subsetting the data
-  data_subset = select(test_data,TransactionAmount,TransactionTime,Overdraft,Country,
-                       ShoppedBefore,HowMuch,ShoppingFreq,ShopProximite,UsualProximite,PrevTranProx,
-                       OnlineTransaction,BillPayment,PreAuthorized)
+  myvars <- c("TransactionAmount","TransactionTime","Overdraft","Country",
+              "ShoppedBefore","HowMuch","ShoppingFreq","ShopProximite","UsualProximite","PrevTranProx",
+              "OnlineTransaction","BillPayment","PreAuthorized")
+
+  data_subset = test_data[myvars]
   
   # Start the clock!
   test_start <- proc.time()
   
   #generate the prediction
-  prediction_probabilities = predict(trained_model,newdata = test_data, type="response")
+  prediction_probabilities = predict(trained_model,newdata = data_subset, type="response")
   
   # Stop the clock
   test_time = proc.time() - test_start
-  elapsed_test_time = train_time[3]
+  elapsed_test_time = test_time[3]
   
   prediction= ifelse(prediction_probabilities > 0.5 ,1,0)
   
@@ -76,7 +78,7 @@ randomForestmd = function(train_data, test_data){
   
   # Stop the clock
   test_time = proc.time() - test_start
-  elapsed_test_time = train_time[3]
+  elapsed_test_time = test_time[3]
   
   return(list("predictions" = prediction, "train_time" = elapsed_train_time, "test_time" = elapsed_test_time))
   
@@ -131,14 +133,14 @@ nbc = function(train_data, test_data){
   
   # Stop the clock
   test_time = proc.time() - test_start
-  elapsed_test_time = train_time[3]
+  elapsed_test_time = test_time[3]
   
   return(list("predictions" = prediction, "train_time" = elapsed_train_time, "test_time" = elapsed_test_time))
   
 }
 
 #streaming simulation
-streaming = function(data,min_n,max_n,FUN){
+streaming = function(data,min_n,max_n,increment,FUN){
   
   #define test and train
   train_data = data[0:max_n,]
@@ -150,7 +152,7 @@ streaming = function(data,min_n,max_n,FUN){
   accuracy_list = list()
   dataset_size = list()
   
-  for(i in seq(min_n,max_n,1000)){
+  for(i in seq(min_n,max_n,increment)){
     #keeping track of observation size//where we are in the loop
     print(i)
     dataset_size[[i]] = i
@@ -187,8 +189,8 @@ data_change_simulation = function(old_data,new_data,test_data,FUN){
   #init the accuracy list to store the values
   accuracy_list = list()
   
-  for (i in length(old_data_frac)){
-    
+  for (i in seq(1,length(old_data_frac))){
+    print(i)
     #creating the combined dataset
     old_df = sample_frac(old_data, size = old_data_frac[i])
     new_df = sample_frac(new_data, size = new_data_frac[i])
@@ -198,15 +200,49 @@ data_change_simulation = function(old_data,new_data,test_data,FUN){
     #getting the results
     returned = FUN(train_data,test_data)
     
-    View(returned)
-    print(table(returned$predictions))
-    
     #adding accuracy to list
     results = confusionMatrix(as.factor(returned$predictions), as.factor(test_data$FraudResults))
-    accuracy_list[[i]] = results$overall['Accuracy']
+    accuracy_list[i] = as.numeric(results$overall['Accuracy'])
     
   }
   
   return(accuracy_list)
   
 }
+
+#wrappers for loop testing
+changing_data_analysis = function(data_v1_full, data_v2_full, n_train, n_test,FUN){
+  
+  #balancing the second dataset
+  new_data = rbind(data_v2_full[sample(which(data_v2_full$FraudResults == 0),500000),],
+                   data_v2_full[sample(which(data_v2_full$FraudResults == 1),500000),])
+  rows = sample(nrow(new_data))
+  new_data = new_data[rows,]
+  rownames(new_data) = NULL
+  
+  #taking a subset of the data just for testing purposes
+  old_data_subset = data_v1_full[0:n_train,]
+  new_data_subset = new_data[0:n_train,]
+  n_end = n_train + n_test
+  test_data_subset = new_data[n_train:n_end,]
+  rownames(test_data_subset) = NULL
+  
+  #getting accuracy list
+  accuracy_list = data_change_simulation(old_data_subset,new_data_subset,test_data_subset,FUN)
+  
+  return(accuracy_list)
+}
+
+n_observation_analysis = function(data,max_n, min_n,increment, FUN){
+  
+  #running the script
+  results = streaming(data, min_n, max_n,increment, FUN)
+  
+  results_df = do.call(rbind, Map(data.frame, observation_size = results$size, train_time = results$train_time, predict_time = results$predict_time, accuracy = results$accuracy))
+  rownames(results_df) = results_df$observation_size
+  results_df$observation_size = NULL
+  
+  return(results_df)
+  
+}
+
